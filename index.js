@@ -5,8 +5,10 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const userRoutes = require('./routes/userRoutes')
-const tournameRoutes = require('./routes/tournamentRoutes')
+const http = require("http");
+const { Server } = require("socket.io");
+const userRoutes = require("./routes/userRoutes");
+const tournamentRoutes = require("./routes/tournamentRoutes");
 
 dotenv.config({ path: __dirname + "/.env" });
 app.use(express.static(__dirname));
@@ -39,14 +41,27 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/user", userRoutes);
-app.use("/api/tournaments", tournameRoutes);
+app.use("/api/tournaments", tournamentRoutes);
 
 // Serve the success page
 app.get("/success", (req, res) => {
   res.send("Success");
 });
 
+// Create HTTP server and integrate Socket.IO
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+// Use the WebSocket controller
+const websocketController = require("./app/controllers/websocketController");
+websocketController(io);
+
 // Start the server
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
