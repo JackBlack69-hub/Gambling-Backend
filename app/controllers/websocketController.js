@@ -1,15 +1,26 @@
 // controllers/websocketController.js
-module.exports = (io) => {
-  io.on("connection", (socket) => {
-    console.log("a user connected");
+const socketio = require("socket.io");
+const ChatController = require("./chatController");
 
-    socket.on("disconnect", () => {
-      console.log("user disconnected");
+const startSocketServer = (server) => {
+  try {
+    const io = socketio(server, {
+      cors: {
+        origin: "http://localhost:5173", // Your React app's URL
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type"],
+        credentials: true,
+      },
     });
 
-    socket.on("message", (msg) => {
-      console.log("message: " + msg);
-      io.emit("message", msg);
-    });
-  });
+    // Instantiate ChatController with the socket.io instance
+    new ChatController(io);
+
+    console.log("WebSocket >>", "Connected!");
+  } catch (error) {
+    console.log(`WebSocket ERROR >> ${error.message}`);
+    process.exit(1);
+  }
 };
+
+module.exports = startSocketServer;

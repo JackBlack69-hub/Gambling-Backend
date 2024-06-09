@@ -4,7 +4,6 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 
 class UserController {
-
   generateVerificationToken() {
     return crypto.randomBytes(20).toString("hex");
   }
@@ -22,10 +21,10 @@ class UserController {
           .json({ error: "Email domain does not have SMTP server" });
       }
 
-        const existingUser = await User.findOne({ email });
-        // if (existingUser) {
-        //   return res.status(400).json({ error: "User already exists" });
-        // }
+      const existingUser = await User.findOne({ email });
+      // if (existingUser) {
+      //   return res.status(400).json({ error: "User already exists" });
+      // }
 
       const newUser = new User({
         username,
@@ -41,9 +40,12 @@ class UserController {
 
       await this.sendVerificationEmail(email, newUser._id, verificationToken);
 
-      return res.status(201).json({ verificationToken,
-        message: "User created successfully. Please verify your email.",
-      });
+      return res
+        .status(201)
+        .json({
+          verificationToken,
+          message: "User created successfully. Please verify your email.",
+        });
     } catch (error) {
       console.error("Error signing up user:", error);
       return res.status(500).json({ error: "Internal server error" });
@@ -53,7 +55,7 @@ class UserController {
   async login(req, res) {
     try {
       const { email, password } = req.body;
-      console.log(email, password)
+      console.log(email, password);
 
       const user = await User.findOne({ email });
 
@@ -65,7 +67,9 @@ class UserController {
         expiresIn: "7d",
       });
 
-      return res.status(200).json({ token, message: "User logged in successfully" });
+      return res
+        .status(200)
+        .json({ token, message: "User logged in successfully" });
     } catch (error) {
       console.error("Error logging in user:", error);
       return res.status(500).json({ error: "Internal server error" });
@@ -89,7 +93,7 @@ class UserController {
     });
   }
 
-  async sendVerificationEmail(email,userId,verificationToken) {
+  async sendVerificationEmail(email, userId, verificationToken) {
     // Create SMTP transporter
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -101,7 +105,7 @@ class UserController {
       },
     });
 
-    const verificationLink = `http://localhost:5000/api/user/verifyEmail?token=${verificationToken}&userId=${userId}`;
+    const verificationLink = `http://localhost:8000/api/user/verifyEmail?token=${verificationToken}&userId=${userId}`;
 
     const emailContent = `
         <div>
@@ -115,7 +119,7 @@ class UserController {
       to: email,
       subject: "Email Verification",
       text: emailContent,
-      html: emailContent
+      html: emailContent,
     });
   }
 
@@ -139,23 +143,23 @@ class UserController {
     return res.status(200).json({ message: "Email verified successfully" });
   }
 
-  async getUser(req, res){
+  async getUser(req, res) {
     const token = req.headers.authorization.split(" ")[1];
     if (!token) {
       return res.status(401).json({ error: "User not authenticated" });
     }
     const decoded = jwt.verify(token, "mySecretKey");
     res.status(200).send({ decoded });
-  };
+  }
 
-  async gelAllUsers(req, res){
+  async gelAllUsers(req, res) {
     try {
       const users = await User.find({});
       return res.status(200).json(users);
     } catch (error) {
       return res.status(500).json({ error: "Internal Server Error" });
     }
-  };
+  }
 }
 
 module.exports = UserController;
