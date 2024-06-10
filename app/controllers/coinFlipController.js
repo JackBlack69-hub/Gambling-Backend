@@ -1,109 +1,46 @@
-const CoinFlip = require('../models/CoinFlip')
+const CoinFlip = require("../models/CoinFlip");
+const { v4: uuidv4 } = require("uuid");
 
 class CoinFlipController {
-    async initializeGame(req, res, next){
-        console.log(req.body);
-        try {
-            const { username, betSize, gameId } = req.body;
-            const newGame = new CoinFlip({
-                player1: username,
-                betSize: betSize,
-                gameId: gameId
-            });
-            await newGame.save();
+  constructor(io) {
+    this.io = io;
+    this.initializeSocketListeners();
+  }
 
-            const responseData = {
-                player1: username,
-                betSize: betSize,
-                gameId: gameId
-            };
+  // Initialize socket listeners
+  initializeSocketListeners() {
+    this.io.on("connection", (socket) => {
+      console.log("A user connected for coinflip");
 
-            res.status(200).json(responseData);
-        } catch (error) {
-            next(error);
-        }
+      socket.on("createGame", this.handleCreateGame.bind(this, socket));
+
+      //   socket.on("joinGame", this.handleJoinGame.bind(this, socket));
+
+      socket.on("disconnect", () => {
+        console.log("User disconnected");
+      });
+    });
+  }
+
+  // Handle create game event
+  async handleCreateGame(socket, data) {
+    try {
+      const inviteCode = uuidv4();
+      const newGame = new CoinFlip({
+        betAmount: data.betAmount,
+        totalBetAmount: data.betAmount,
+        inviteCode,
+        players: [data.player],
+      });
+      const savedGame = await newGame.save();
+
+      socket.join(inviteCode);
+      this.io.emit("gameCreated", savedGame);
+    } catch (err) {
+      console.error("Error creating game:", err);
+      socket.emit("error", "Failed to create game");
     }
-
-    async joinGame(req, res, next){
-        console.log(req.body);
-        try {
-            const { username, gameId } = req.body;
-    
-            const updatedGame = await CoinFlip.findOneAndUpdate(
-                { gameId: gameId },
-                { player2: username },
-                { new: true }
-            );
-    
-            if (!updatedGame) {
-                throw new Error("Game not found");
-            }
-    
-            const responseData = {
-                gameId: gameId,
-                player2: username
-            };
-    
-            res.status(200).json(responseData);
-        } catch (error) {
-            next(error);
-        }
-    };
-
-    async placeBet(req, res, next){
-        console.log(req.body)
-        try {
-            const { gameId, player2Bet } = req.body;
-            const updatedGame = await CoinFlip.findOneAndUpdate(
-                { gameId: gameId },
-                { player2Bet: player2Bet },
-                { new: true }
-            );
-            
-            if (!updatedGame) {
-                throw new Error("Game not found");
-            }
-            
-            const responseData = {
-                gameId: gameId,
-                player2Bet: player2Bet
-            };
-    
-            res.status(200).json(responseData);
-        } catch (error) {
-            next(error);
-        }
-    };
-    
-    async playCoinFlip(req, res, next){
-        console.log(req.body)
-        try {
-            const { gameId } = req.body;
-            const game = await CoinFlip.findOne({ gameId: gameId });
-    
-            if (!game) {
-                throw new Error("Game not found");
-            }
-            const decider = Math.random()
-            const result = decider < 0.5 ? game.player1 : game.player2;
-            console.log(decider ,result)
-    
-            game.winner = result;
-            game.status = "Game finished";
-            await game.save();
-    
-            const responseData = {
-                gameId: game._id,
-                winner: result,
-                status: game.status
-            };
-
-            res.status(200).json(responseData);
-        } catch (error) {
-            next(error);
-        }
-    }          
-    
+  }
 }
 
-module.exports = new CoinFlipController();
+module.exports = CoinFlipController;

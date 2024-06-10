@@ -1,19 +1,19 @@
-const moongose = require('moongose')
+const moongose = require("moongose");
 
 const GamesSchema = new mongoose.Schema({
-    game_code:{
-        type:string,
-        required: true
-    },
-    Game:{
-        type:String,
-        required: true
-    },
-    maxPlayerSize:{
-        type:Number,
-        required: true
-    },
+  game_code: {
+    type: string,
+    required: true,
+  },
+  game_name: {
+    type: String,
+    required: true,
+  },
+  max_player_size: {
+    type: Number,
+    required: true,
+  },
 });
 
-const Games = moongose.model("Games", GamesSchema)
-module.exports = Games
+const Games = moongose.model("Games", GamesSchema);
+module.exports = Games;

@@ -1,6 +1,7 @@
 // controllers/websocketController.js
 const socketio = require("socket.io");
 const ChatController = require("./chatController");
+const CoinFlipController = require("./coinFlipController");
 
 const startSocketServer = (server) => {
   try {
@@ -15,6 +16,7 @@ const startSocketServer = (server) => {
 
     // Instantiate ChatController with the socket.io instance
     new ChatController(io);
+    new CoinFlipController(io);
 
     console.log("WebSocket >>", "Connected!");
   } catch (error) {

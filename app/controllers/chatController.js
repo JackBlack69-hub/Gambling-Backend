@@ -46,15 +46,15 @@ class ChatController {
       console.log("a user connected");
 
       // Send existing messages to the newly connected user
-      Chat.find()
-        .sort({ timestamp: -1 })
-        .limit(50)
-        .then((chats) => {
-          socket.emit("initialMessages", chats.reverse());
-        })
-        .catch((err) => {
-          console.error("Error retrieving messages:", err);
-        });
+      // Chat.find()
+      //   .sort({ timestamp: -1 })
+      //   .limit(50)
+      //   .then((chats) => {
+      //     socket.emit("initialMessages", chats.reverse());
+      //   })
+      //   .catch((err) => {
+      //     console.error("Error retrieving messages:", err);
+      //   });
 
       socket.on("disconnect", () => {
         console.log("user disconnected");

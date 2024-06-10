@@ -13,12 +13,12 @@ const chatController = new ChatController(mockIo);
 
 router.get(
   "/getAllChats",
-  //   validateToken,
+  // validateToken,
   chatController.getAllChats.bind(chatController)
 );
 router.post(
   "/createChat",
-  //   validateToken,
+  // validateToken,
   chatController.createChat.bind(chatController)
 );
 
