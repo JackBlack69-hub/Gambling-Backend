@@ -40,12 +40,10 @@ class UserController {
 
       await this.sendVerificationEmail(email, newUser._id, verificationToken);
 
-      return res
-        .status(201)
-        .json({
-          verificationToken,
-          message: "User created successfully. Please verify your email.",
-        });
+      return res.status(201).json({
+        verificationToken,
+        message: "User created successfully. Please verify your email.",
+      });
     } catch (error) {
       console.error("Error signing up user:", error);
       return res.status(500).json({ error: "Internal server error" });
@@ -63,9 +61,13 @@ class UserController {
         return res.status(401).json({ error: "Invalid email or password" });
       }
 
-      const token = jwt.sign({ userId: user._id }, "mySecretKey", {
-        expiresIn: "7d",
-      });
+      const token = jwt.sign(
+        { userId: user._id, userName: user.username },
+        "mySecretKey",
+        {
+          expiresIn: "7d",
+        }
+      );
 
       return res
         .status(200)
@@ -145,10 +147,12 @@ class UserController {
 
   async getUser(req, res) {
     const token = req.headers.authorization.split(" ")[1];
+
     if (!token) {
       return res.status(401).json({ error: "User not authenticated" });
     }
     const decoded = jwt.verify(token, "mySecretKey");
+
     res.status(200).send({ decoded });
   }
 
