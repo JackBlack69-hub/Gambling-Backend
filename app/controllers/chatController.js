@@ -5,6 +5,7 @@ class ChatController {
   constructor(io) {
     this.io = io;
     this.initializeSocketListeners();
+    this.count = 0;
   }
 
   // Fetch all chat messages
@@ -63,9 +64,14 @@ class ChatController {
   initializeSocketListeners() {
     this.io.on("connection", (socket) => {
       console.log("a user connected");
+      this.count += 1;
+      console.log("Count", this.count);
+      this.io.emit("count", this.count);
 
       socket.on("disconnect", () => {
         console.log("user disconnected");
+        this.count -= 1;
+        this.io.emit("count", this.count);
       });
 
       socket.on("message", async (msg) => {
