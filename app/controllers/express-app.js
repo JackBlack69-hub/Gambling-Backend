@@ -6,6 +6,7 @@ const cors = require("cors");
 const userRoutes = require("../../routes/userRoutes");
 const tournamentRoutes = require("../../routes/tournamentRoutes");
 const chatRoutes = require("../../routes/chatRoutes");
+const path = require("path");
 
 const app = express();
 
@@ -32,6 +33,8 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+console.log("TEST", path.join(__dirname, "../../uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "../..", "uploads")));
 
 // Routes
 app.use("/api/user", userRoutes);

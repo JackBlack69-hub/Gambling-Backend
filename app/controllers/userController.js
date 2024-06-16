@@ -1,7 +1,7 @@
-User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const User = require("../models/User");
 
 class UserController {
   generateVerificationToken() {
@@ -162,6 +162,50 @@ class UserController {
       return res.status(200).json(users);
     } catch (error) {
       return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+  async uploadPfp(req, res) {
+    try {
+      const token = req.headers.authorization.split(" ")[1];
+
+      if (!token) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      const decoded = jwt.verify(token, "mySecretKey");
+      const user = await User.findByIdAndUpdate(
+        decoded.userId,
+        {
+          pfp: req.filename,
+        },
+        { upsert: true }
+      );
+
+      const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${
+        user.pfp
+      }`;
+      return res.status(200).json({ fileUrl });
+    } catch (error) {
+      return res.status(500).json({ error: error });
+    }
+  }
+
+  async getPfp(req, res) {
+    try {
+      const token = req.headers.authorization.split(" ")[1];
+
+      if (!token) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      const decoded = jwt.verify(token, "mySecretKey");
+      const user = await User.findById(decoded.userId);
+
+      const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${
+        user.pfp
+      }`;
+      return res.status(200).json({ fileUrl });
+    } catch (error) {
+      return res.status(500).json({ error: error });
     }
   }
 }
