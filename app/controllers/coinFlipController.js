@@ -1,5 +1,6 @@
 const CoinFlip = require("../models/CoinFlip");
 const { v4: uuidv4 } = require("uuid");
+const current_user = require("../../utils/current_user");
 
 class CoinFlipController {
   constructor(io) {
@@ -26,11 +27,19 @@ class CoinFlipController {
   async handleCreateGame(socket, data) {
     try {
       const inviteCode = uuidv4();
+      const user = await current_user(data.player_token);
       const newGame = new CoinFlip({
         betAmount: data.betAmount,
         totalBetAmount: data.betAmount,
-        inviteCode,
-        players: [data.player],
+        inviteCode: inviteCode,
+        players: [
+          {
+            userId: user.id,
+            coinSide: data.coinSide,
+          },
+        ],
+        created_by: user.id,
+        status: data.status,
       });
       const savedGame = await newGame.save();
 

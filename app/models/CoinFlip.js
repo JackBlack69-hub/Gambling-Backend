@@ -1,5 +1,17 @@
 const mongoose = require("mongoose");
 
+const coinsSchema = new mongoose.Schema(
+  {
+    userId: String,
+    coinSide: {
+      type: String,
+      enum: ["heads", "tails"],
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const coinFlipSchema = new mongoose.Schema({
   betAmount: Number,
   totalBetAmount: Number,
@@ -11,8 +23,10 @@ const coinFlipSchema = new mongoose.Schema({
 
   inviteCode: String, // Custom invite code (only for private games)
 
+  created_by: String,
+
   players: {
-    type: Array,
+    type: [coinsSchema],
     default: [],
   },
 
