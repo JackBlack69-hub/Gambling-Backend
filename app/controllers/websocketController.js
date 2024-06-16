@@ -20,7 +20,7 @@ const startSocketServer = (server) => {
 
     console.log("WebSocket >>", "Connected!");
   } catch (error) {
-    console.log(`WebSocket ERROR >> ${error.message}`);
+    // console.log(`WebSocket ERROR >> ${error.message}`);
     process.exit(1);
   }
 };

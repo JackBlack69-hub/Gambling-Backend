@@ -1,4 +1,5 @@
 const Chat = require("../models/Chat");
+const User = require("../models/User");
 
 class ChatController {
   constructor(io) {
@@ -9,8 +10,25 @@ class ChatController {
   // Fetch all chat messages
   async getAllChats(req, res) {
     try {
-      const chats = await Chat.find().sort({ timestamp: 1 }).limit(50);
-      res.json(chats.reverse()); // reverse to get the most recent messages at the bottom
+      const chats = await Chat.find()
+        .populate("user", "username pfp")
+        .sort({ timestamp: 1 })
+        .limit(50);
+
+      const chatsWithUserDetails = chats.map((chat) => {
+        const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${
+          chat.user.pfp
+        }`;
+        return {
+          message: chat.message,
+          timestamp: chat.timestamp,
+          username: chat.user.username,
+          pfp: fileUrl,
+          // other fields from chat if needed
+        };
+      });
+
+      res.json(chatsWithUserDetails.reverse()); // reverse to get the most recent messages at the bottom
     } catch (err) {
       res.status(500).json({ error: "Failed to fetch chat messages" });
     }
@@ -20,7 +38,8 @@ class ChatController {
   async createChat(req, res) {
     const { user, message } = req.body;
     try {
-      const newChat = new Chat({ user, message });
+      const userFromSchema = await User.findOne({ username: user });
+      const newChat = new Chat({ userFromSchema, message });
       const savedChat = await newChat.save();
       res.json(savedChat);
     } catch (err) {
@@ -51,12 +70,28 @@ class ChatController {
 
       socket.on("message", async (msg) => {
         console.log("message: " + JSON.stringify(msg));
+        const userFromSchema = await User.findOne({ username: msg.user });
+
+        const newMsg = { user: userFromSchema, message: msg.message };
 
         try {
-          const savedChat = await this.saveChat(msg);
-          this.io.emit("message", savedChat);
+          const savedChat = await this.saveChat(newMsg);
+
+          const chats = await Chat.findById(savedChat._id)
+            .populate("user", "username pfp")
+            .exec();
+          const fileUrl = `http://localhost:8000/uploads/${chats.user.pfp}`;
+
+          const send = {
+            username: chats.user.username,
+            message: chats.message,
+            timestamp: chats.timestamp,
+            pfp: fileUrl,
+          };
+
+          this.io.emit("message", send);
         } catch (err) {
-          console.error("Error saving message:", err);
+          // console.error("Error saving message:", err);
         }
       });
     });
