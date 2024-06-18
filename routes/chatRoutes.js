@@ -11,15 +11,6 @@ const mockIo = {
 };
 const chatController = new ChatController(mockIo);
 
-router.get(
-  "/getAllChats",
-  // validateToken,
-  chatController.getAllChats.bind(chatController)
-);
-router.post(
-  "/createChat",
-  // validateToken,
-  chatController.createChat.bind(chatController)
-);
+router.get("/getAllChats", chatController.getAllChats.bind(chatController));
 
 module.exports = router;

@@ -35,19 +35,6 @@ class ChatController {
     }
   }
 
-  // Create a new chat message
-  async createChat(req, res) {
-    const { user, message } = req.body;
-    try {
-      const userFromSchema = await User.findOne({ username: user });
-      const newChat = new Chat({ userFromSchema, message });
-      const savedChat = await newChat.save();
-      res.json(savedChat);
-    } catch (err) {
-      res.status(500).json({ error: "Failed to save chat message" });
-    }
-  }
-
   // Save chat message to the database
   async saveChat(data) {
     const { user, message } = data;
@@ -76,9 +63,9 @@ class ChatController {
 
       socket.on("message", async (msg) => {
         console.log("message: " + JSON.stringify(msg));
-        const userFromSchema = await User.findOne({ username: msg.user });
 
-        const newMsg = { user: userFromSchema, message: msg.message };
+        // Use authenticated user from the socket
+        const newMsg = { user: socket.user, message: msg.message };
 
         try {
           const savedChat = await this.saveChat(newMsg);
@@ -97,7 +84,7 @@ class ChatController {
 
           this.io.emit("message", send);
         } catch (err) {
-          // console.error("Error saving message:", err);
+          console.error("Error saving message:", err);
         }
       });
     });

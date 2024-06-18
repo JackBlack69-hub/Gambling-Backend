@@ -2,6 +2,7 @@
 const socketio = require("socket.io");
 const ChatController = require("./chatController");
 const CoinFlipController = require("./coinFlipController");
+const authenticateSocket = require("../../middleware/authenticateSocket");
 
 const startSocketServer = (server) => {
   try {
@@ -13,6 +14,9 @@ const startSocketServer = (server) => {
         credentials: true,
       },
     });
+
+    // Middleware to authenticate the token
+    io.use(authenticateSocket);
 
     // Instantiate ChatController with the socket.io instance
     new ChatController(io);
