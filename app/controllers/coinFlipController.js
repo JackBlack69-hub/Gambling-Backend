@@ -28,19 +28,19 @@ class CoinFlipController {
   async handleCreateGame(socket, data) {
     try {
       const inviteCode = uuidv4();
-      const user = await current_user(data.player_token);
+      const user = socket.user.id;
       const newGame = new CoinFlip({
         betAmount: data.betAmount,
-        totalBetAmount: data.betAmount,
+        totalBetAmount: 2 * data.betAmount,
         inviteCode: inviteCode,
         players: [
           {
-            userId: user.id,
+            userId: user,
             coinSide: data.coinSide,
           },
         ],
         created_by: user.id,
-        status: data.status,
+        status: 1,
       });
       const savedGame = await newGame.save();
 
@@ -55,7 +55,7 @@ class CoinFlipController {
   // Handle join game event
   async handleJoinGame(socket, data) {
     try {
-      const user = await current_user(data.player_token);
+      const user = socket.user;
       const game = await CoinFlip.findOne({ inviteCode: data.inviteCode });
 
       if (!game) {
@@ -67,11 +67,12 @@ class CoinFlipController {
         userId: user.id,
         coinSide: "tails",
       });
-      game.status = 2; // Update game status to indicate the game has started
+      game.status = 2;
 
       const updatedGame = await game.save();
 
       socket.join(data.inviteCode);
+      this.io.emit("playerJoined", updatedGame);
       this.io.emit("gameJoined", updatedGame);
     } catch (err) {
       console.error("Error joining game:", err);

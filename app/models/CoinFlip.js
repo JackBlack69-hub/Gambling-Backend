@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const coinsSchema = new mongoose.Schema(
+const playerSchema = new mongoose.Schema(
   {
     userId: String,
     coinSide: {
@@ -26,7 +26,7 @@ const coinFlipSchema = new mongoose.Schema({
   created_by: String,
 
   players: {
-    type: [coinsSchema],
+    type: [playerSchema],
     default: [],
   },
 
