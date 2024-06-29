@@ -1,6 +1,5 @@
 const CoinFlip = require("../models/CoinFlip");
 const { v4: uuidv4 } = require("uuid");
-const current_user = require("../../utils/current_user");
 
 class CoinFlipController {
   constructor(io) {
@@ -11,12 +10,8 @@ class CoinFlipController {
   // Initialize socket listeners
   initializeSocketListeners() {
     this.io.on("connection", (socket) => {
-      console.log("A user connected for coinflip");
-
       socket.on("createGame", this.handleCreateGame.bind(this, socket));
       socket.on("joinGame", this.handleJoinGame.bind(this, socket));
-
-      //   socket.on("joinGame", this.handleJoinGame.bind(this, socket));
 
       socket.on("disconnect", () => {
         console.log("User disconnected");
@@ -28,14 +23,14 @@ class CoinFlipController {
   async handleCreateGame(socket, data) {
     try {
       const inviteCode = uuidv4();
-      const user = socket.user.id;
+      const user = socket.user;
       const newGame = new CoinFlip({
         betAmount: data.betAmount,
         totalBetAmount: 2 * data.betAmount,
         inviteCode: inviteCode,
         players: [
           {
-            userId: user,
+            userId: user.id,
             coinSide: data.coinSide,
           },
         ],
@@ -72,8 +67,10 @@ class CoinFlipController {
       const updatedGame = await game.save();
 
       socket.join(data.inviteCode);
-      this.io.emit("playerJoined", updatedGame);
-      this.io.emit("gameJoined", updatedGame);
+      this.io.emit("updateGameState", updatedGame);
+      this.io.to(data.inviteCode).emit("gameJoined", updatedGame);
+
+      await this.startGame(updatedGame);
     } catch (err) {
       console.error("Error joining game:", err);
       socket.emit("error", "Failed to join game");
@@ -83,17 +80,44 @@ class CoinFlipController {
   // Function to start the game
   async startGame(game) {
     try {
-      // Simulate game result after a delay
-      setTimeout(async () => {
-        const winningSide = Math.random() < 0.5 ? "red" : "blue";
-        game.winningSide = winningSide;
-        game.status = 3; // Update status to 'Ended'
-        const updatedGame = await game.save();
+      const winningSide = Math.random() < 0.5 ? "heads" : "tails";
+      game.winningSide = winningSide;
+      game.status = 3; // Update status to 'Ended'
+      const updatedGame = await game.save();
 
-        this.io.to(game.inviteCode).emit("gameEnded", updatedGame);
-      }, 5000); // 5 seconds delay to simulate game processing
+      this.io.to(game.inviteCode).emit("gameEnded", updatedGame);
     } catch (err) {
       console.error("Error starting game:", err);
+    }
+  }
+
+  async getAllGames(req, res) {
+    try {
+      const games = await CoinFlip.find({ status: 1 })
+        .populate("players.userId", "username pfp")
+        .sort({ createdAt: -1 });
+
+      const gamesWithPlayerDetails = games.map((game) => ({
+        betAmount: game.betAmount,
+        totalBetAmount: game.totalBetAmount,
+        inviteCode: game.inviteCode,
+        players: game.players.map((player) => ({
+          username: player.userId.username,
+          pfp: player.userId.pfp
+            ? `${req.protocol}://${req.get("host")}/uploads/${
+                player.userId.pfp
+              }`
+            : null,
+          coinSide: player.coinSide,
+        })),
+        created_by: game.created_by,
+        status: game.status,
+      }));
+
+      res.json(gamesWithPlayerDetails);
+    } catch (err) {
+      console.error("Error fetching games:", err);
+      res.status(500).json({ error: "Failed to fetch games" });
     }
   }
 }

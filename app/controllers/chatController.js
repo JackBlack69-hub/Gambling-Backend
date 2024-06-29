@@ -52,7 +52,6 @@ class ChatController {
     this.io.on("connection", (socket) => {
       console.log("a user connected");
       this.count += 1;
-      console.log("Count", this.count);
       this.io.emit("count", this.count);
 
       socket.on("disconnect", () => {

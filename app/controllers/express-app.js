@@ -7,6 +7,7 @@ const userRoutes = require("../../routes/userRoutes");
 const tournamentRoutes = require("../../routes/tournamentRoutes");
 const chatRoutes = require("../../routes/chatRoutes");
 const plinkoRoutes = require("../../routes/plinkoRoutes");
+const coinFlipRoutes = require("../../routes/coinflipRoutes");
 const path = require("path");
 
 const app = express();
@@ -42,6 +43,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/plinko", plinkoRoutes);
+app.use("/api/coinFlip", coinFlipRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the port no " + process.env.PORT);
